@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"log"
-	"math/big"
 	"sort"
 )
 
@@ -85,13 +84,13 @@ func DeserializeSecretKey(b []byte) *SecretKey {
 
 // Sign signs a message with a secret key.
 func Sign(message []byte, key *SecretKey) *Signature {
-	h := HashG1(message).Mul(key.f.n)
+	h := HashG1(message).Mul(key.f.n.ToFQ())
 	return &Signature{s: h}
 }
 
 // PrivToPub converts the private key into a public key.
 func PrivToPub(k *SecretKey) *PublicKey {
-	return &PublicKey{p: G2AffineOne.Mul(k.f.n)}
+	return &PublicKey{p: G2AffineOne.Mul(k.f.n.ToFQ())}
 }
 
 // RandKey generates a random secret key.
@@ -104,10 +103,10 @@ func RandKey(r io.Reader) (*SecretKey, error) {
 	return s, nil
 }
 
-// KeyFromBig returns a new key based on a big int in
+// KeyFromFQRepr returns a new key based on a FQRepr in
 // FR.
-func KeyFromBig(i *big.Int) *SecretKey {
-	return &SecretKey{f: NewFR(i)}
+func KeyFromFQRepr(i *FRRepr) *SecretKey {
+	return &SecretKey{f: FRReprToFR(i)}
 }
 
 // Verify verifies a signature against a message and a public key.
