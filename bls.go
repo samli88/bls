@@ -65,6 +65,15 @@ func (p PublicKey) Serialize() []byte {
 	return CompressG2(p.p.ToAffine()).Bytes()[:48]
 }
 
+// Fingerprint returns the public key fingerprint per the spec:
+//
+// The public key fingerprint is the first 4 bytes of hash256(serialize(pubkey))
+func (p *PublicKey) Fingerprint() []byte {
+	// hash256
+	buf := Hash256(p.Serialize())
+	return buf[:4]
+}
+
 // Equals checks if two public keys are equal
 func (p PublicKey) Equals(other PublicKey) bool {
 	return p.p.Equal(other.p)
