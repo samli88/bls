@@ -47,6 +47,21 @@ func (p PublicKey) String() string {
 
 // Serialize serializes a public key to bytes.
 func (p PublicKey) Serialize() []byte {
+	// Serialization
+	// private key (32 bytes): Big endian integer.
+
+	// pubkey (48 bytes): 381 bit affine x coordinate, encoded into 48
+	// big-endian bytes. Since we have 3 bits left over in the beginning, the
+	// first bit is set to 1 iff y coordinate is the lexicographically largest
+	// of the two valid ys. The public key fingerprint is the first 4 bytes of
+	// hash256(serialize(pubkey)).
+
+	// signature (96 bytes): Two 381 bit integers (affine x coordinate),
+	// encoded into two 48 big-endian byte arrays. Since we have 3 bits left
+	// over in the beginning, the first bit is set to 1 iff the y coordinate is
+	// the lexicographically largest of the two valid ys. (The term with the i
+	// is compared first, i.e 3i + 1 > 2i + 7).
+
 	return CompressG2(p.p.ToAffine()).Bytes()[:48]
 }
 
@@ -123,6 +138,12 @@ func SecretKeyFromSeed(seed []byte) *SecretKey {
 	}
 }
 
+// PublicKey returns the public key.
+func (s *SecretKey) PublicKey() *PublicKey {
+	return PrivToPub(s)
+}
+
+// String implements the Stringer interface.
 func (s SecretKey) String() string {
 	return s.f.String()
 }
