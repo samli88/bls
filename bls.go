@@ -2,9 +2,6 @@ package bls
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha256"
-	"fmt"
 	"io"
 	"log"
 	"math/big"
@@ -69,7 +66,6 @@ func (p PublicKey) Serialize() []byte {
 //
 // The public key fingerprint is the first 4 bytes of hash256(serialize(pubkey))
 func (p *PublicKey) Fingerprint() []byte {
-	// hash256
 	buf := Hash256(p.Serialize())
 	return buf[:4]
 }
@@ -95,55 +91,19 @@ type SecretKey struct {
 	f *FR
 }
 
-// SecretKeyFromSeed generates a secret key from a seed
+// SecretKeyFromSeed generates a private key from a seed, similar to HD key
+// generation (hashes the seed), and reduces it mod the group order.
 func SecretKeyFromSeed(seed []byte) *SecretKey {
-	// keyGen
-	// Creates a public/private keypair, using a seed s. Private keys are 255 bit integers, and public keys are G1 elements.
-	// input: random seed s
-	// output: field element in Zq, G1 element
-	// # Perform an HMAC using hash256, and the following string as the key
-	// sk <- hmac256(s, b"BLS private key seed") mod n
-	// pk <- g1 ^ sk
+	hmacKey := []byte("BLS private key seed")
 
-	// "BLS private key seed" in ascii
-	hmacKey := []byte{
-		0x42, 0x4c, 0x53, 0x20, 0x70, 0x72, 0x69, 0x76, 0x61, 0x74,
-		0x65, 0x20, 0x6b, 0x65, 0x79, 0x20, 0x73, 0x65, 0x65, 0x64,
-	}
-	fmt.Println("hmackey = ", string(hmacKey))
-
+	// TODO: Harden. memguard?
 	// securely allocate a buffer of PRIVATE_KEY_SIZE bytes
-	//uint8_t* hash = Util::SecAlloc<uint8_t>(PrivateKey::PRIVATE_KEY_SIZE);
+	// uint8_t* hash = Util::SecAlloc<uint8_t>(PrivateKey::PRIVATE_KEY_SIZE);
 
-	// fake it for now
-	// var hash []byte
-
-	// Hash the seed into sk
-	// md_hmac(hash, seed, seedLen, hmacKey, sizeof(hmacKey));
-	// func New(h func() hash.Hash, key []byte) hash.Hash
-	//
-	// New returns a new HMAC hash using the given hash.Hash type and key. Note
-	// that unlike other hash implementations in the standard library, the
-	// returned Hash does not implement encoding.BinaryMarshaler or
-	// encoding.BinaryUnmarshaler.
-
-	// Create a new HMAC by defining the hash type and the key (as byte array)
-	hash := hmac.New(sha256.New, hmacKey)
-
-	// Write data (which is the seed) to it
-	hash.Write(seed)
-
-	// Get the result
-	// and encode as a hexadecimal string
-	sha := hash.Sum(nil)
-
-	sth := new(big.Int).Mod(
-		new(big.Int).SetBytes(sha),
-		RFieldModulus,
-	)
-
+	hashed := Hmac256(seed, hmacKey)
+	// Mod n (ensure value less than group order)
 	return &SecretKey{
-		NewFR(sth),
+		NewFR(new(big.Int).Mod(new(big.Int).SetBytes(hashed), RFieldModulus)),
 	}
 }
 
@@ -175,9 +135,20 @@ func Sign(message []byte, key *SecretKey) *Signature {
 }
 
 // PrivToPub converts the private key into a public key.
+// pk <- g1 ^ sk
 func PrivToPub(k *SecretKey) *PublicKey {
+	// g1 ^ sk
 	return &PublicKey{p: G2AffineOne.Mul(k.f.n)}
 }
+
+// PublicKey PrivateKey::GetPublicKey() const {
+//     g1_t *q = Util::SecAlloc<g1_t>(1);
+//     g1_mul_gen(*q, *keydata);
+//
+//     const PublicKey ret = PublicKey::FromG1(q);
+//     Util::SecFree(*q);
+//     return ret;
+// }
 
 // RandKey generates a random secret key.
 func RandKey(r io.Reader) (*SecretKey, error) {
