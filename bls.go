@@ -59,7 +59,7 @@ func (p PublicKey) Serialize() []byte {
 	// the lexicographically largest of the two valid ys. (The term with the i
 	// is compared first, i.e 3i + 1 > 2i + 7).
 
-	return CompressG1(p.p.ToAffine()).Bytes()[:48]
+	return CompressG1(p.p.ToAffine()).Bytes()
 }
 
 // Fingerprint returns the public key fingerprint per the spec:
