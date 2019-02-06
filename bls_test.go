@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/matryer/is"
 	"github.com/samli88/bls"
 )
 
@@ -202,5 +203,54 @@ func BenchmarkBLSVerify(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		bls.Verify(msg, pub, sig)
+	}
+}
+
+// TODO: Add tests for all test vectors here:
+// https://github.com/Chia-Network/bls-signatures/blob/master/SPEC.md
+
+func TestKeygen(t *testing.T) {
+	tests := []struct {
+		seed          []byte
+		secretKey     []byte
+		pkFingerprint []byte
+	}{
+
+		// keygen([1,2,3,4,5])
+		// sk1: 0x022fb42c08c12de3a6af053880199806532e79515f94e83461612101f9412f9e
+		// pk1 fingerprint: 0x26d53247
+
+		// keygen([1,2,3,4,5,6])
+		//pk2 fingerprint: 0x289bb56e
+
+		{
+			seed: []byte{1, 2, 3, 4, 5},
+			secretKey: []byte{
+				0x02, 0x2f, 0xb4, 0x2c, 0x08, 0xc1, 0x2d, 0xe3,
+				0xa6, 0xaf, 0x05, 0x38, 0x80, 0x19, 0x98, 0x06,
+				0x53, 0x2e, 0x79, 0x51, 0x5f, 0x94, 0xe8, 0x34,
+				0x61, 0x61, 0x21, 0x01, 0xf9, 0x41, 0x2f, 0x9e,
+			},
+			pkFingerprint: []byte{0x26, 0xd5, 0x32, 0x47},
+		},
+		{
+			seed:          []byte{1, 2, 3, 4, 5, 6},
+			secretKey:     []byte{},
+			pkFingerprint: []byte{0x28, 0x9b, 0xb5, 0x6e},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(st *testing.T) {
+			is := is.New(st)
+
+			sk := bls.SecretKeyFromSeed(tt.seed)
+			if len(tt.secretKey) > 0 {
+				is.Equal(sk.Serialize(), tt.secretKey)
+			}
+
+			pk := sk.PublicKey()
+			is.Equal(pk.Fingerprint(), tt.pkFingerprint)
+		})
 	}
 }
