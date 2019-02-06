@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/phoreproject/bls"
+	"github.com/samli88/bls"
 )
 
 var (

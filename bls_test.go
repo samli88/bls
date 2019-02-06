@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/phoreproject/bls"
+	"github.com/samli88/bls"
 )
 
 func SignVerify(loopCount int) error {
