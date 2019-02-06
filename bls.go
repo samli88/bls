@@ -44,7 +44,7 @@ func (p PublicKey) String() string {
 
 // Serialize serializes a public key to bytes.
 func (p PublicKey) Serialize() []byte {
-	return CompressG2(p.p.ToAffine()).Bytes()
+	return CompressG2(p.p.ToAffine()).Bytes()[:48]
 }
 
 // Equals checks if two public keys are equal
