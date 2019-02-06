@@ -2,6 +2,9 @@ package bls
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"fmt"
 	"io"
 	"log"
 	"math/big"
@@ -66,6 +69,56 @@ func DeserializePublicKey(b []byte) (*PublicKey, error) {
 // SecretKey represents a BLS private key.
 type SecretKey struct {
 	f *FR
+}
+
+// SecretKeyFromSeed generates a secret key from a seed
+func SecretKeyFromSeed(seed []uint8) *SecretKey {
+	// keyGen
+	// Creates a public/private keypair, using a seed s. Private keys are 255 bit integers, and public keys are G1 elements.
+	// input: random seed s
+	// output: field element in Zq, G1 element
+	// # Perform an HMAC using hash256, and the following string as the key
+	// sk <- hmac256(s, b"BLS private key seed") mod n
+	// pk <- g1 ^ sk
+
+	// "BLS private key seed" in ascii
+	hmacKey := []uint8{66, 76, 83, 32, 112, 114, 105, 118, 97, 116, 101,
+		32, 107, 101, 121, 32, 115, 101, 101, 100}
+	fmt.Println("hmackey = ", hmacKey)
+
+	// securely allocate a buffer of PRIVATE_KEY_SIZE bytes
+	//uint8_t* hash = Util::SecAlloc<uint8_t>(PrivateKey::PRIVATE_KEY_SIZE);
+
+	// fake it for now
+	// var hash []uint8
+
+	// Hash the seed into sk
+	// md_hmac(hash, seed, seedLen, hmacKey, sizeof(hmacKey));
+	// func New(h func() hash.Hash, key []byte) hash.Hash
+	//
+	// New returns a new HMAC hash using the given hash.Hash type and key. Note
+	// that unlike other hash implementations in the standard library, the
+	// returned Hash does not implement encoding.BinaryMarshaler or
+	// encoding.BinaryUnmarshaler.
+
+	// Create a new HMAC by defining the hash type and the key (as byte array)
+	hash := hmac.New(sha256.New, hmacKey)
+
+	// Write data (which is the seed) to it
+	hash.Write(seed)
+
+	// Get the result
+	// and encode as a hexadecimal string
+	sha := hash.Sum(nil)
+
+	sth := new(big.Int).Mod(
+		new(big.Int).SetBytes(sha),
+		RFieldModulus,
+	)
+
+	return &SecretKey{
+		NewFR(sth),
+	}
 }
 
 func (s SecretKey) String() string {
