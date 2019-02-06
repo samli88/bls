@@ -72,7 +72,7 @@ type SecretKey struct {
 }
 
 // SecretKeyFromSeed generates a secret key from a seed
-func SecretKeyFromSeed(seed []uint8) *SecretKey {
+func SecretKeyFromSeed(seed []byte) *SecretKey {
 	// keyGen
 	// Creates a public/private keypair, using a seed s. Private keys are 255 bit integers, and public keys are G1 elements.
 	// input: random seed s
@@ -82,15 +82,17 @@ func SecretKeyFromSeed(seed []uint8) *SecretKey {
 	// pk <- g1 ^ sk
 
 	// "BLS private key seed" in ascii
-	hmacKey := []uint8{66, 76, 83, 32, 112, 114, 105, 118, 97, 116, 101,
-		32, 107, 101, 121, 32, 115, 101, 101, 100}
-	fmt.Println("hmackey = ", hmacKey)
+	hmacKey := []byte{
+		0x42, 0x4c, 0x53, 0x20, 0x70, 0x72, 0x69, 0x76, 0x61, 0x74,
+		0x65, 0x20, 0x6b, 0x65, 0x79, 0x20, 0x73, 0x65, 0x65, 0x64,
+	}
+	fmt.Println("hmackey = ", string(hmacKey))
 
 	// securely allocate a buffer of PRIVATE_KEY_SIZE bytes
 	//uint8_t* hash = Util::SecAlloc<uint8_t>(PrivateKey::PRIVATE_KEY_SIZE);
 
 	// fake it for now
-	// var hash []uint8
+	// var hash []byte
 
 	// Hash the seed into sk
 	// md_hmac(hash, seed, seedLen, hmacKey, sizeof(hmacKey));
