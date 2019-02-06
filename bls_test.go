@@ -1,6 +1,7 @@
 package bls_test
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"testing"
@@ -251,6 +252,37 @@ func TestKeygen(t *testing.T) {
 
 			pk := sk.PublicKey()
 			is.Equal(pk.Fingerprint(), tt.pkFingerprint)
+		})
+	}
+}
+
+// generated series of BLS keypairs on Dash v0.13 node for test compatibility
+// secret and public keys should match (derive public from secret should work w/this lib)
+func TestDashCoreBLSCompatibility(t *testing.T) {
+	tests := []struct {
+		secretKeyHex string
+		publicKeyHex string
+	}{
+		{
+			secretKeyHex: "563ce0062829910d8ef12cff8f47ea800832bc84cd3222d2bdfd1282cd362852",
+			publicKeyHex: "8f5c05bdd0ee6fca063a49684c9f88fae01872f96d340db7d8ee1afee379d0031025e6e34d528a0fc6091c595d6ebc87",
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(st *testing.T) {
+			is := is.New(st)
+
+			skBytes, err := hex.DecodeString(tt.secretKeyHex)
+			is.NoErr(err)
+
+			sk := bls.DeserializeSecretKey(skBytes)
+
+			pkExpected, err := hex.DecodeString(tt.publicKeyHex)
+			is.NoErr(err)
+
+			pk := sk.PublicKey()
+			is.Equal(pk.Serialize(), pkExpected)
 		})
 	}
 }
