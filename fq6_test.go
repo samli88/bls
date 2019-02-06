@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/phoreproject/bls"
+	"github.com/samli88/bls"
 )
 
 func TestFQ6MultiplyByNonresidue(t *testing.T) {
