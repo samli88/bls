@@ -198,8 +198,7 @@ func CompressG1(affine *G1Affine) *big.Int {
 		out0 := new(big.Int).Set(affine.x.n).Bytes()
 		copy(res[:], out0)
 
-		negY := affine.y.Neg()
-
+		// negY := affine.y.Neg()
 		//if affine.y.Cmp(negY) > 0 {
 		//	res[0] |= 1 << 5
 		//}
