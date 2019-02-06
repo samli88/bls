@@ -35,7 +35,8 @@ func (s *Signature) Copy() *Signature {
 
 // PublicKey is a public key.
 type PublicKey struct {
-	p *G2Projective
+	// p *G2Projective
+	p *G1Projective
 }
 
 func (p PublicKey) String() string {
@@ -140,6 +141,9 @@ func PrivToPub(k *SecretKey) *PublicKey {
 	// g1 ^ sk
 	return &PublicKey{p: G2AffineOne.Mul(k.f.n)}
 }
+
+//def get_public_key(self):
+//  return PublicKey.from_g1((self.value * generator_Fq()).to_jacobian())
 
 // PublicKey PrivateKey::GetPublicKey() const {
 //     g1_t *q = Util::SecAlloc<g1_t>(1);
