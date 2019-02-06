@@ -200,9 +200,9 @@ func CompressG1(affine *G1Affine) *big.Int {
 
 		negY := affine.y.Neg()
 
-		if affine.y.Cmp(negY) > 0 {
-			res[0] |= 1 << 5
-		}
+		//if affine.y.Cmp(negY) > 0 {
+		//	res[0] |= 1 << 5
+		//}
 	}
 
 	res[0] |= 1 << 7
