@@ -168,6 +168,15 @@ func DecompressG1Unchecked(b *big.Int) (*G1Affine, error) {
 		return nil, errors.New("unexpected compression mode")
 	}
 
+
+	// C++ implementation at Chia-network/bls-signatures:
+	//if copyBytes[0]&0x80 == 0 {
+	//	copyBytes[0] = 0x02  // Insert extra byte for Y=0
+	//} else {
+	//	copyBytes[0] = 0x03  // Insert extra byte for Y=1
+	//	copyBytes[1] &= 0x7f // Remove initial Y bit
+	//}
+
 	if copyBytes[0]&(1<<6) != 0 {
 		// this is the point at infinity
 		copyBytes[0] &= 0x3f
@@ -200,19 +209,10 @@ func CompressG1(affine *G1Affine) *big.Int {
 
 		negY := affine.y.Neg()
 		if affine.y.Cmp(negY) > 0 {
-			//	res[0] |= 1 << 5
 			res[0] |= 1 << 7
 		}
 	}
 
-	// pubkey (48 bytes): 381 bit affine x coordinate, encoded into 48
-	// big-endian bytes. Since we have 3 bits left over in the beginning, the
-	// first bit is set to 1 iff y coordinate is the lexicographically largest
-	// of the two valid ys.
-	//
-	// The public key fingerprint is the first 4 bytes of hash256(serialize(pubkey)).
-
-	//res[0] |= 1 << 7
 	return new(big.Int).SetBytes(res[:])
 }
 
