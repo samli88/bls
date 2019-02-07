@@ -198,13 +198,21 @@ func CompressG1(affine *G1Affine) *big.Int {
 		out0 := new(big.Int).Set(affine.x.n).Bytes()
 		copy(res[:], out0)
 
-		// negY := affine.y.Neg()
-		//if affine.y.Cmp(negY) > 0 {
-		//	res[0] |= 1 << 5
-		//}
+		negY := affine.y.Neg()
+		if affine.y.Cmp(negY) > 0 {
+			//	res[0] |= 1 << 5
+			res[0] |= 1 << 7
+		}
 	}
 
-	res[0] |= 1 << 7
+	// pubkey (48 bytes): 381 bit affine x coordinate, encoded into 48
+	// big-endian bytes. Since we have 3 bits left over in the beginning, the
+	// first bit is set to 1 iff y coordinate is the lexicographically largest
+	// of the two valid ys.
+	//
+	// The public key fingerprint is the first 4 bytes of hash256(serialize(pubkey)).
+
+	//res[0] |= 1 << 7
 	return new(big.Int).SetBytes(res[:])
 }
 
