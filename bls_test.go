@@ -237,7 +237,7 @@ func TestPubkeySerializeDeserialize(t *testing.T) {
 		t.Fatal("message did not verify before serialization/deserialization of pubkey")
 	}
 
-	pubSer := pub.Serialize()
+	pubSer := pub.Serialize(true)
 	pubDeser, err := bls.DeserializePublicKey(pubSer)
 	if err != nil {
 		t.Fatal(err)
@@ -258,8 +258,8 @@ func TestPubkeySerializeDeserializeBig(t *testing.T) {
 		t.Fatal("message did not verify before serialization/deserialization of uncompressed pubkey")
 	}
 
-	pubSer := pub.SerializeBig()
-	pubDeser := bls.DeserializePublicKeyBig(pubSer)
+	pubSer := pub.Serialize(false)
+	pubDeser, _ := bls.DeserializePublicKey(pubSer)
 	if !bls.Verify(msg, pubDeser, sig, 0) {
 		t.Fatal("message did not verify after serialization/deserialization of uncompressed pubkey")
 	}

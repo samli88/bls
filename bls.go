@@ -2,10 +2,16 @@ package bls
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"math/big"
 	"sort"
+)
+
+const (
+	G1ElementSize = 48
+	G2ElementSize = 96
 )
 
 // Signature is a message signature.
@@ -43,47 +49,20 @@ func (p PublicKey) String() string {
 }
 
 // Serialize serializes a public key to bytes.
-func (p PublicKey) Serialize() []byte {
-	return CompressG2(p.p.ToAffine()).Bytes()
-}
-
-func concatAppend(slices [][]byte) []byte {
-	var tmp []byte
-	for _, s := range slices {
-		tmp = append(tmp, s...)
+func (p PublicKey) Serialize(compressed bool) []byte {
+	if compressed {
+		return CompressG2(p.p.ToAffine()).Bytes()
 	}
-	return tmp
-}
 
-// SerializeBig serializes a public key uncompressed.
-func (p PublicKey) SerializeBig() []byte {
+	// else serialize uncompressed
 	affine := p.p.ToAffine()
-	out := [192]byte{}
-	infinity := affine.infinity
-
-	if infinity {
+	out := [G2ElementSize * 2]byte{}
+	if affine.infinity {
 		out[0] = (1 << 6)
 		return out[:]
 	}
 
-	copy(out[:], affine.SerializeBytes())
-
-	return out[:]
-}
-
-// DeserializePublicKeyBig deserializes a public key uncompressed.
-func DeserializePublicKeyBig(uncompressed []byte) *PublicKey {
-	g := G2Affine{}
-
-	if uncompressed[0] == (1 << 6) {
-		g.infinity = true
-		return &PublicKey{p: g.ToProjective()}
-	}
-
-	// Set points given raw bytes for coordinates
-	g.SetRawBytes(uncompressed)
-
-	return &PublicKey{p: g.ToProjective()}
+	return affine.SerializeBytes()
 }
 
 // Equals checks if two public keys are equal
@@ -91,15 +70,31 @@ func (p PublicKey) Equals(other PublicKey) bool {
 	return p.p.Equal(other.p)
 }
 
-// DeserializePublicKey deserializes a public key from
-// bytes.
+// DeserializePublicKey deserializes a public key from bytes.
 func DeserializePublicKey(b []byte) (*PublicKey, error) {
-	a, err := DecompressG2(new(big.Int).SetBytes(b))
-	if err != nil {
-		return nil, err
+	switch len(b) {
+	case G2ElementSize:
+		a, err := DecompressG2(new(big.Int).SetBytes(b))
+		if err != nil {
+			return nil, err
+		}
+
+		return &PublicKey{p: a.ToProjective()}, nil
+
+	case G2ElementSize * 2:
+		g := G2Affine{}
+		if b[0] == (1 << 6) {
+			g.infinity = true
+			return &PublicKey{p: g.ToProjective()}, nil
+		}
+
+		// Set points given raw bytes for coordinates
+		g.SetRawBytes(b)
+
+		return &PublicKey{p: g.ToProjective()}, nil
 	}
 
-	return &PublicKey{p: a.ToProjective()}, nil
+	return nil, fmt.Errorf("invalid pubkey bytes")
 }
 
 // SecretKey represents a BLS private key.
