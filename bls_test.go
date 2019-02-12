@@ -216,7 +216,7 @@ func TestSignatureSerializeDeserialize(t *testing.T) {
 		t.Fatal("message did not verify before serialization/deserialization")
 	}
 
-	sigSer := sig.Serialize()
+	sigSer := sig.Serialize(true)
 	sigDeser, err := bls.DeserializeSignature(sigSer)
 	if err != nil {
 		t.Fatal(err)

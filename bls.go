@@ -19,19 +19,48 @@ type Signature struct {
 	s *G1Projective
 }
 
-// Serialize serializes a signature in compressed form.
-func (s *Signature) Serialize() []byte {
-	return CompressG1(s.s.ToAffine()).Bytes()
+// Serialize serializes a signature.
+func (s *Signature) Serialize(compressed bool) []byte {
+	if compressed {
+		return CompressG1(s.s.ToAffine()).Bytes()
+	}
+
+	// else serialize uncompressed
+	affine := s.s.ToAffine()
+	out := [G1ElementSize * 2]byte{}
+	if affine.infinity {
+		out[0] = (1 << 6)
+		return out[:]
+	}
+
+	return affine.SerializeBytes()
 }
 
 // DeserializeSignature deserializes a signature from bytes.
 func DeserializeSignature(b []byte) (*Signature, error) {
-	a, err := DecompressG1(new(big.Int).SetBytes(b))
-	if err != nil {
-		return nil, err
+	switch len(b) {
+	case G1ElementSize:
+		a, err := DecompressG1(new(big.Int).SetBytes(b))
+		if err != nil {
+			return nil, err
+		}
+
+		return &Signature{s: a.ToProjective()}, nil
+
+	case G1ElementSize * 2:
+		a := G1Affine{}
+		if b[0] == (1 << 6) {
+			a.infinity = true
+			return &Signature{s: a.ToProjective()}, nil
+		}
+
+		// Set points given raw bytes for coordinates
+		a.SetRawBytes(b)
+
+		return &Signature{s: a.ToProjective()}, nil
 	}
 
-	return &Signature{s: a.ToProjective()}, nil
+	return nil, fmt.Errorf("invalid signature bytes")
 }
 
 // Copy returns a copy of the signature.
